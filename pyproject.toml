@@ -5,14 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "jobclaw"
 version = "0.1.0"
-description = "AI-powered job hunting agent for scraping, matching, applying, and notifying."
+description = "Boss Zhipin search and AI greeting automation."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
   { name = "JobClaw Contributors" }
 ]
-keywords = ["jobs", "automation", "llm", "playwright", "openclaw"]
+keywords = ["jobs", "automation", "llm", "drissionpage", "openclaw"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -24,13 +24,12 @@ classifiers = [
   "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
-  "playwright>=1.50.0",
-  "langchain>=0.3.20",
+  "DrissionPage>=4.1.1.2,<4.2",
   "httpx>=0.28.1",
   "pydantic>=2.10.6",
   "pydantic-settings>=2.7.1",
   "click>=8.1.8",
-  "PyYAML>=6.0.2"
+  "beautifulsoup4>=4.15.0",
 ]
 
 [project.optional-dependencies]
@@ -40,6 +39,13 @@ dev = [
   "ruff>=0.9.7",
   "mypy>=1.15.0"
 ]
+
+[tool.uv]
+cache-dir = ".jobclaw/uv-cache"
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
 
 [project.urls]
 Homepage = "https://github.com/VPC-byte/jobclaw"

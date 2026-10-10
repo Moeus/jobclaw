@@ -14,8 +14,6 @@ class JobSource(str, Enum):
     """Supported job sources."""
 
     BOSS = "boss"
-    LINKEDIN = "linkedin"
-    LAGOU = "lagou"
 
 
 class ApplicationStatus(str, Enum):
@@ -48,7 +46,7 @@ class SalaryRange(BaseModel):
 
 
 class Job(BaseModel):
-    """A normalized job listing from any source platform."""
+    """A normalized Boss job listing."""
 
     id: str = Field(default_factory=lambda: str(uuid4()))
     source: JobSource
@@ -59,28 +57,14 @@ class Job(BaseModel):
     description: str
     salary: SalaryRange | None = None
     tags: list[str] = Field(default_factory=list)
+    job_type: str | None = None
     posted_at: datetime | None = None
     scraped_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-class Profile(BaseModel):
-    """Candidate profile loaded from local config files."""
-
-    name: str
-    email: str | None = None
-    years_experience: float = Field(default=0.0, ge=0.0)
-    summary: str = ""
-    skills: list[str] = Field(default_factory=list)
-    desired_roles: list[str] = Field(default_factory=list)
-    preferred_locations: list[str] = Field(default_factory=list)
-    salary_expectation: SalaryRange | None = None
-    remote_ok: bool = True
-    links: dict[str, HttpUrl] = Field(default_factory=dict)
-
-
 class Match(BaseModel):
-    """Match result between a profile and a job listing."""
+    """AI match result between resume text and a job listing."""
 
     job_id: str
     score: float = Field(ge=0.0, le=1.0)

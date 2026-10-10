@@ -1,4 +1,4 @@
-"""Scraper subpackage for job platform crawlers."""
+"""Boss job scraper."""
 
 from jobclaw.scraper.base import BaseScraper
 

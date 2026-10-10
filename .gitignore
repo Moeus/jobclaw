@@ -35,10 +35,18 @@ htmlcov/
 .env.*
 !.env.example
 
-# Playwright artifacts
-playwright-report/
-test-results/
+# Optional local DrissionPage browser profile
+.jobclaw-browser/
+boss_browser_profile/
+# Application history and other local state
+.jobclaw/
+# Personal resumes
+resume/
 
 # OS files
 .DS_Store
 Thumbs.db
+
+
+boss_browser_profile
+boss_captures

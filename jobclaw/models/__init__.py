@@ -1,38 +1,5 @@
-"""LLM abstraction layer + re-exported domain models for backward compat."""
+"""Re-export domain models for existing imports."""
 
-# --- LLM layer -----------------------------------------------------------
-from jobclaw.models.streaming import (
-    StreamContext,
-    StreamOptions,
-    UnifiedStreamer,
-    is_oauth_token,
-)
-from jobclaw.models.claude_api import ClaudeClient
+from jobclaw.domain import Application, ApplicationStatus, Job, JobSource, Match, SalaryRange
 
-# --- Domain models (moved to jobclaw.domain, re-exported here) -----------
-from jobclaw.domain import (
-    Application,
-    ApplicationStatus,
-    Job,
-    JobSource,
-    Match,
-    Profile,
-    SalaryRange,
-)
-
-__all__ = [
-    # LLM
-    "ClaudeClient",
-    "StreamContext",
-    "StreamOptions",
-    "UnifiedStreamer",
-    "is_oauth_token",
-    # Domain
-    "Application",
-    "ApplicationStatus",
-    "Job",
-    "JobSource",
-    "Match",
-    "Profile",
-    "SalaryRange",
-]
+__all__ = ["Application", "ApplicationStatus", "Job", "JobSource", "Match", "SalaryRange"]

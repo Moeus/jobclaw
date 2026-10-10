@@ -1,78 +1,15 @@
-# JobClaw Architecture
+# Architecture
 
-## Overview
-
-JobClaw follows a pipeline architecture with five stages:
-
-```
-Profile → Scrape → Match → Apply → Notify
-```
-
-Each stage is modular and can be extended with new platform adapters.
-
-## Pipeline Flow
-
-```
-┌─────────────┐
-│   Profile    │  User's skills, preferences, salary range
-│   Loader     │  Supports YAML and JSON formats
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   Scraper    │  Playwright-based browser automation
-│   Layer      │  One adapter per platform (Boss/LinkedIn/...)
-│              │  Outputs normalized Job objects
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│    LLM      │  Sends (Job + Profile) to LLM
-│   Matcher   │  Returns score (0-1) + reasoning
-│              │  Configurable model (GPT-4o-mini default)
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│    Auto     │  Platform-specific application flow
-│   Applier   │  Boss: "打招呼" chat initiation
-│              │  LinkedIn: Easy Apply form fill
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  Notifier   │  Telegram Bot API / Discord Webhook
-│   Layer     │  Summary of matches + application status
-└─────────────┘
+```text
+SEARCH_QUERIES -> Boss search -> ordered cards -> optional salary floor
+                                               |
+UTF-8 Markdown/text resume --------------------+-> JobAI.generate_greeting
+                                                         |
+                                  new detail tab -> dialog/chat -> history -> notifications
 ```
 
-## Data Flow
+`BossBrowser` owns a dedicated persistent Chrome profile under this project's `.jobclaw/browser/boss`. History is under `.jobclaw/apply_history.json`. The manual login command, scraper, and applier use the same profile. During `run`, scraper and applier share one browser session. Search opens one tab per query without a separate incognito context and retains it throughout the run. Once its loaded cards are consumed, the search session scrolls the same tab and waits for unseen job URLs; it stops after repeated scrolls yield no new cards. Detail and chat tabs are opened separately. Browser navigation uses DrissionPage `none` load mode and `retry=0`, then waits for real `/job_detail/*.html` links in the current `li.job-card-box` cards. The older `.job-card-wrapper` remains a fallback. Job type and city come from `BOSS_JOB_TYPE` and `BOSS_CITY`.
 
-All stages communicate through Pydantic models:
+`jobclaw/browser.py` translates the retained CSS selectors to DrissionPage's `css:` locator syntax. Playwright-only `:has-text()` selectors are matched by their CSS base and descendant text. The scraper retains its card and field selectors. The applier branches by the visible detail-page button: Start Chat uses the in-page `.startchat-dialog` textarea and send control; Continue Chat uses the full chat page's contenteditable composer and send button. Captcha handling stops and notifies rather than solving the challenge.
 
-- **Profile** → loaded from YAML/JSON, validated
-- **Job** → normalized from any platform, includes salary, tags, URL
-- **Match** → LLM scoring result with reasoning
-- **Application** → tracks status (draft → submitted → interview → offer)
-
-## Key Design Decisions
-
-1. **Playwright over API scraping** — Job sites have aggressive anti-bot, browser automation is more reliable
-2. **LLM for matching** — Rules-based matching is too rigid; LLM understands nuance (e.g. "3 years Python" ≈ "senior backend")
-3. **Async throughout** — Scraping and API calls are I/O bound, async improves throughput
-4. **Platform adapters** — Abstract base classes ensure consistent interface, easy to add new platforms
-5. **Cookie-based auth** — Simpler than OAuth, user exports cookies from their browser session
-
-## Adding a New Platform
-
-1. Create `jobclaw/scraper/newplatform.py` extending `BaseScraper`
-2. Create `jobclaw/applier/newplatform.py` extending `BaseApplier`
-3. Add new `JobSource` enum value in `models.py`
-4. Register in `cli.py`
-
-## Security Considerations
-
-- API keys and cookies stored in `.env` (gitignored)
-- No credentials hardcoded in source
-- Rate limiting respected per platform
-- User responsible for compliance with platform ToS
+`JobAI` sends Chat Completions requests to an OpenAI-compatible endpoint. The `run` flow only calls `generate_greeting` with unstructured resume text and job content; `match_job` remains an independent API but is not called. Salary is included only when `SALARY_FILTER_ENABLED=true`. AI generation and Boss browser actions run sequentially per card. Each new card is deduplicated and checked against application history before AI generation or opening the detail tab. Each query receives a daily share, with unused shares redistributed to other queries when cards run out. History counts button attempts in China time before clicking and upgrades them to submitted after a visible message confirmation. Telegram, Discord, and Feishu notifications are independent channels.

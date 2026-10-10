@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
-from playwright.async_api import Page
+from jobclaw.browser import find_first, find_first_visible
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ _CAPTCHA_SELECTORS = [
 ]
 
 
-async def detect_captcha(page: Page) -> bool:
+def detect_captcha(page: Any) -> bool:
     """Detect if the page is showing a captcha challenge.
 
     Checks multiple known selectors and also looks for common
@@ -28,8 +29,7 @@ async def detect_captcha(page: Page) -> bool:
     """
     for selector in _CAPTCHA_SELECTORS:
         try:
-            el = await page.query_selector(selector)
-            if el and await el.is_visible():
+            if find_first_visible(page, [selector]):
                 logger.warning("Captcha detected via selector: %s", selector)
                 return True
         except Exception:
@@ -37,7 +37,8 @@ async def detect_captcha(page: Page) -> bool:
 
     # Text-based fallback: check for common captcha prompt text
     try:
-        body_text = await page.inner_text("body")
+        body = find_first(page, "body")
+        body_text = body.text if body else ""
         captcha_keywords = ["请完成安全验证", "滑动验证", "图形验证", "安全检测"]
         for kw in captcha_keywords:
             if kw in body_text:
@@ -58,10 +59,8 @@ async def notify_captcha(notifier: object, job_url: str) -> None:
         job_url: The URL where captcha was encountered.
     """
     message = (
-        "🚨 <b>Boss直聘 验证码拦截</b>\n\n"
-        f"投递时遇到验证码，需要手动处理：\n"
-        f"<code>{job_url}</code>\n\n"
-        "请在浏览器中完成验证后，投递将自动继续。"
+        "Boss直聘遇到验证码，本次投递已停止。请手动处理并重新运行。\n"
+        f"岗位：{job_url}"
     )
     try:
         if hasattr(notifier, "send_text"):

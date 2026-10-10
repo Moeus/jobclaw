@@ -9,16 +9,17 @@ from jobclaw.models import Job, JobSource
 
 
 class BaseScraper(ABC):
-    """Base scraper that all platform scrapers must implement."""
+    """Common scraper interface for the Boss search workflow."""
 
     source: JobSource
 
     @abstractmethod
-    async def scrape_jobs(
+    def scrape_jobs(
         self,
         query: str,
         location: str | None = None,
         limit: int = 20,
+        job_type: str = "all",
     ) -> list[Job]:
         """Scrape job listings matching the query.
 
@@ -26,15 +27,16 @@ class BaseScraper(ABC):
             query: Search keywords (e.g. "Python Engineer").
             location: Optional location filter.
             limit: Maximum number of jobs to return.
+            job_type: Boss job type (all, full-time, internship, part-time).
 
         Returns:
             List of normalized Job objects.
         """
         ...
 
-    async def __aenter__(self) -> Self:
+    def __enter__(self) -> Self:
         """Set up browser/session resources."""
         return self
 
-    async def __aexit__(self, *args: object) -> None:
+    def __exit__(self, *args: object) -> None:
         """Tear down browser/session resources."""

@@ -9,7 +9,6 @@ from jobclaw.models import (
     Job,
     JobSource,
     Match,
-    Profile,
     SalaryRange,
 )
 
@@ -46,11 +45,11 @@ class TestJob:
 
     def test_job_with_salary(self) -> None:
         job = Job(
-            source=JobSource.LINKEDIN,
+            source=JobSource.BOSS,
             title="AI Engineer",
             company="AI Corp",
             location="Remote",
-            url="https://linkedin.com/jobs/123",
+            url="https://www.zhipin.com/job_detail/123.html",
             description="Work on agents",
             salary=SalaryRange(min_annual=400000, max_annual=800000),
             tags=["Python", "LLM", "Agent"],
@@ -58,18 +57,6 @@ class TestJob:
         assert job.salary is not None
         assert job.salary.min_annual == 400000
         assert len(job.tags) == 3
-
-
-class TestProfile:
-    def test_create_profile(self) -> None:
-        p = Profile(
-            name="Joe",
-            years_experience=3,
-            skills=["Python", "K8s", "LLM"],
-        )
-        assert p.name == "Joe"
-        assert p.remote_ok is True  # default
-        assert len(p.skills) == 3
 
 
 class TestMatch:

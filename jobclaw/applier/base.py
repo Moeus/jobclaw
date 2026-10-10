@@ -5,19 +5,19 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Self
 
-from jobclaw.models import Application, Job, Profile
+from jobclaw.models import Application, Job
 
 
 class BaseApplier(ABC):
-    """Base applier that platform-specific appliers must implement."""
+    """Common applier interface for the Boss chat workflow."""
 
     @abstractmethod
-    async def apply(self, job: Job, profile: Profile) -> Application:
+    async def apply(self, job: Job, resume_text: str) -> Application:
         """Submit an application for the given job.
 
         Args:
             job: The job to apply to.
-            profile: The candidate profile.
+            resume_text: The unstructured candidate resume.
 
         Returns:
             Application object with status.
